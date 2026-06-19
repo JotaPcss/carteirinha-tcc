@@ -71,6 +71,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Cloudinary (armazenamento de imagens em nuvem) -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.38.0</version>
+        </dependency>
+
         <!-- Lombok (opcional, para reduzir boilerplate) -->
         <dependency>
             <groupId>org.projectlombok</groupId>

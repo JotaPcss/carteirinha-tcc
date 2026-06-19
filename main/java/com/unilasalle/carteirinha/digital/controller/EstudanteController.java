@@ -78,8 +78,8 @@ public class EstudanteController {
         Estudante estudante = estudanteRepository.findByMatricula(matricula)
                 .orElseThrow(() -> new RuntimeException("Estudante não encontrado"));
         try {
-            String nomeFoto = uploadService.salvarFoto(foto, matricula);
-            estudante.setUrlFoto("/uploads/fotos/" + nomeFoto);
+            String urlFoto = uploadService.salvarFoto(foto, matricula);
+            estudante.setUrlFoto(urlFoto);
             estudante.setStatusFoto(StatusFoto.PENDENTE);
             estudanteRepository.save(estudante);
             return ResponseEntity.ok(Map.of("mensagem", "Foto enviada, aguardando aprovação"));

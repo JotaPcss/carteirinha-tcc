@@ -17,7 +17,7 @@ public interface EstudanteRepository extends JpaRepository<Estudante, Integer> {
     List<Estudante> findByStatusFoto(StatusFoto status);
     List<Estudante> findByAtivoTrue();
 
-    @Query("SELECT e FROM Estudante e WHERE e.ativo = true AND (" +
+    @Query("SELECT e FROM Estudante e WHERE e.ativo IS TRUE AND (" +
            "LOWER(e.nomeCompleto) LIKE LOWER(CONCAT('%', :busca, '%')) OR " +
            "LOWER(e.matricula)    LIKE LOWER(CONCAT('%', :busca, '%')) OR " +
            "LOWER(e.email)        LIKE LOWER(CONCAT('%', :busca, '%')) OR " +

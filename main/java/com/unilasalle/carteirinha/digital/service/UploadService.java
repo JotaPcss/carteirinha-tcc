@@ -1,57 +1,53 @@
 package com.unilasalle.carteirinha.digital.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 public class UploadService {
 
-    private static final long MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
-    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".webp");
+    private static final long MAX_SIZE_BYTES = 5 * 1024 * 1024;
+    private static final Set<String> ALLOWED_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
 
-    @Value("${app.upload.dir:uploads/fotos}")
-    private String uploadDir;
+    private final Cloudinary cloudinary;
 
-    /**
-     * Valida e salva a foto do estudante, retornando o nome do arquivo salvo.
-     * O arquivo fica em {@code uploadDir/nomeArquivo}.
-     */
-    public String salvarFoto(MultipartFile file, String matricula) throws IOException {
-        if (file.isEmpty()) {
-            throw new IllegalArgumentException("Arquivo vazio");
-        }
-        if (file.getSize() > MAX_SIZE_BYTES) {
-            throw new IllegalArgumentException("Arquivo muito grande. Tamanho máximo: 5 MB");
-        }
-
-        String extensao = extrairExtensao(file.getOriginalFilename());
-        if (!ALLOWED_EXTENSIONS.contains(extensao.toLowerCase())) {
-            throw new IllegalArgumentException("Tipo de arquivo não permitido. Use: JPG, PNG ou WEBP");
-        }
-
-        Path dirPath = Paths.get(uploadDir);
-        if (!Files.exists(dirPath)) {
-            Files.createDirectories(dirPath);
-        }
-
-        String nomeArquivo = matricula + "_" + UUID.randomUUID() + extensao;
-        Path filePath = dirPath.resolve(nomeArquivo);
-        Files.copy(file.getInputStream(), filePath);
-        return nomeArquivo;
+    public UploadService(
+            @Value("${cloudinary.cloud_name}") String cloudName,
+            @Value("${cloudinary.api_key}")    String apiKey,
+            @Value("${cloudinary.api_secret}") String apiSecret) {
+        this.cloudinary = new Cloudinary(ObjectUtils.asMap(
+                "cloud_name", cloudName,
+                "api_key",    apiKey,
+                "api_secret", apiSecret,
+                "secure",     true
+        ));
     }
 
-    private String extrairExtensao(String filename) {
-        if (filename != null && filename.contains(".")) {
-            return filename.substring(filename.lastIndexOf("."));
-        }
-        return "";
+    /**
+     * Faz upload da foto para o Cloudinary e retorna a URL segura (HTTPS).
+     * O public_id inclui a matrícula para facilitar identificação no painel.
+     */
+    public String salvarFoto(MultipartFile file, String matricula) throws IOException {
+        if (file.isEmpty()) throw new IllegalArgumentException("Arquivo vazio");
+        if (file.getSize() > MAX_SIZE_BYTES) throw new IllegalArgumentException("Arquivo muito grande. Máximo: 5 MB");
+        if (!ALLOWED_TYPES.contains(file.getContentType()))
+            throw new IllegalArgumentException("Tipo não permitido. Use: JPG, PNG ou WEBP");
+
+        Map<?, ?> result = cloudinary.uploader().upload(
+                file.getBytes(),
+                ObjectUtils.asMap(
+                        "folder",    "carteirinha",
+                        "public_id", "foto_" + matricula,
+                        "overwrite", true
+                )
+        );
+        return (String) result.get("secure_url");
     }
 }
