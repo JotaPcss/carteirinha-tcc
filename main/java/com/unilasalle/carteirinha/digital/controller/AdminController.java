@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -90,5 +91,62 @@ public class AdminController {
     public ResponseEntity<?> bloquearCarteirinha(@PathVariable Integer id) {
         carteirinhaService.bloquearCarteirinha(id);
         return ResponseEntity.ok(Map.of("mensagem", "Carteirinha bloqueada"));
+    }
+
+    // ── Gerenciamento de Usuários ────────────────────────────────────────────
+
+    @GetMapping("/usuarios")
+    public ResponseEntity<List<EstudanteResponseDTO>> listarUsuarios(
+            @RequestParam(required = false) String busca) {
+        List<Estudante> lista = (busca != null && !busca.isBlank())
+                ? estudanteRepository.buscarPorTexto(busca)
+                : estudanteRepository.findByAtivoTrue();
+        List<EstudanteResponseDTO> dtos = lista.stream().map(e -> {
+            String nomeCurso = e.getIdCurso() != null
+                    ? cursoRepository.findById(e.getIdCurso()).map(Curso::getNomeCurso).orElse(null)
+                    : null;
+            return new EstudanteResponseDTO(e, nomeCurso);
+        }).toList();
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/usuarios/{id}")
+    public ResponseEntity<EstudanteResponseDTO> obterUsuario(@PathVariable Integer id) {
+        Estudante e = estudanteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Estudante não encontrado"));
+        String nomeCurso = e.getIdCurso() != null
+                ? cursoRepository.findById(e.getIdCurso()).map(Curso::getNomeCurso).orElse(null)
+                : null;
+        return ResponseEntity.ok(new EstudanteResponseDTO(e, nomeCurso));
+    }
+
+    @PutMapping("/usuarios/{id}")
+    public ResponseEntity<EstudanteResponseDTO> atualizarUsuario(
+            @PathVariable Integer id,
+            @RequestBody Map<String, Object> dados) {
+        Estudante e = estudanteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Estudante não encontrado"));
+        if (dados.containsKey("nomeCompleto") && dados.get("nomeCompleto") != null)
+            e.setNomeCompleto((String) dados.get("nomeCompleto"));
+        if (dados.containsKey("email") && dados.get("email") != null)
+            e.setEmail((String) dados.get("email"));
+        if (dados.containsKey("idCurso") && dados.get("idCurso") != null)
+            e.setIdCurso((Integer) dados.get("idCurso"));
+        e.setDataAtualizacao(LocalDateTime.now());
+        estudanteRepository.save(e);
+        String nomeCurso = e.getIdCurso() != null
+                ? cursoRepository.findById(e.getIdCurso()).map(Curso::getNomeCurso).orElse(null)
+                : null;
+        return ResponseEntity.ok(new EstudanteResponseDTO(e, nomeCurso));
+    }
+
+    @DeleteMapping("/usuarios/{id}")
+    public ResponseEntity<?> excluirUsuario(@PathVariable Integer id) {
+        Estudante e = estudanteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Estudante não encontrado"));
+        e.setAtivo(false);
+        e.setDataAtualizacao(LocalDateTime.now());
+        estudanteRepository.save(e);
+        return ResponseEntity.ok(Map.of("mensagem", "Estudante desativado com sucesso"));
     }
 }

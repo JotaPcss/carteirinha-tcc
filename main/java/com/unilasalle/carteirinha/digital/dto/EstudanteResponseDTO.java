@@ -14,21 +14,23 @@ public class EstudanteResponseDTO {
     private StatusFoto statusFoto;
     private Boolean ativo;
     private String nomeCurso;
+    private Integer idCurso;
 
     public EstudanteResponseDTO(Estudante estudante) {
         this(estudante, null);
     }
 
     public EstudanteResponseDTO(Estudante estudante, String nomeCurso) {
-        this.idEstudante  = estudante.getIdEstudante();
-        this.matricula    = estudante.getMatricula();
-        this.nomeCompleto = estudante.getNomeCompleto();
-        this.email        = estudante.getEmail();
+        this.idEstudante    = estudante.getIdEstudante();
+        this.matricula      = estudante.getMatricula();
+        this.nomeCompleto   = estudante.getNomeCompleto();
+        this.email          = estudante.getEmail();
         this.dataNascimento = estudante.getDataNascimento();
-        this.urlFoto      = estudante.getUrlFoto();
-        this.statusFoto   = estudante.getStatusFoto();
-        this.ativo        = estudante.getAtivo();
-        this.nomeCurso    = nomeCurso;
+        this.urlFoto        = estudante.getUrlFoto();
+        this.statusFoto     = estudante.getStatusFoto();
+        this.ativo          = estudante.getAtivo();
+        this.nomeCurso      = nomeCurso;
+        this.idCurso        = estudante.getIdCurso();
     }
 
     public Integer getIdEstudante()      { return idEstudante; }
@@ -40,4 +42,5 @@ public class EstudanteResponseDTO {
     public StatusFoto getStatusFoto()    { return statusFoto; }
     public Boolean getAtivo()            { return ativo; }
     public String getNomeCurso()         { return nomeCurso; }
+    public Integer getIdCurso()          { return idCurso; }
 }
